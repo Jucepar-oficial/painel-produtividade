@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Conversor mensal — Jucepar</title><link rel="stylesheet" href="estilos.css"></head>
+<body class="conversor-pagina">
+  <header class="topo"><div class="topo-interno"><img src="imagens/jucepar-logo-horizontal.png" alt="Jucepar"><div><small>Ferramenta institucional</small><h1>Conversor mensal de produtividade</h1></div><a class="botao" href="index.html">Abrir painel</a></div></header>
+  <main class="conversor">
+    <section class="aviso"><strong>Processamento local</strong><p>A planilha é processada neste navegador e não é enviada para a internet. O JSON gerado contém somente dados agregados; a coluna de protocolo não é publicada.</p></section>
+    <section class="caixa passo"><span>1</span><div><h2>Selecione a competência</h2><p>Informe o mês que será publicado.</p><div class="linha-campos"><label>Ano<input id="conv-ano" type="number" min="2025" max="2100" value="2026"></label><label>Mês<select id="conv-mes"></select></label></div></div></section>
+    <section class="caixa passo"><span>2</span><div><h2>Selecione a planilha</h2><p>O arquivo deve conter somente a aba <b>DADOS</b>. O cadastro dos vogais e seus vínculos já está incorporado à ferramenta.</p><label class="arquivo">Escolher arquivo Excel<input id="conv-arquivo" type="file" accept=".xlsx,.xls"></label><small id="arquivo-nome">Nenhum arquivo selecionado.</small></div></section>
+    <section class="caixa passo"><span>3</span><div><h2>Validar e gerar</h2><p>A ferramenta verificará a estrutura, a competência e o cadastro dos vogais.</p><button id="conv-gerar" class="botao principal">Validar planilha</button><div id="conv-resultado" class="resultado oculto"></div></div></section>
+    <section class="caixa"><h2>Depois de gerar</h2><ol><li>Baixe o arquivo <code>produtividade-AAAA-MM.json</code>.</li><li>Publique-o na pasta <code>dados</code> do painel.</li><li>Acrescente o nome do arquivo no <code>dados/manifest.json</code>.</li><li>Atualize a data e confirme o total no painel.</li></ol></section>
+  </main>
+  <script src="vendor/xlsx.full.min.js"></script><script src="conversor.js"></script>
+</body></html>

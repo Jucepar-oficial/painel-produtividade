@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Painel de Produtividade dos Vogais da Jucepar">
+  <title>Produtividade dos Vogais — Jucepar</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <header class="topo"><div class="topo-interno">
+    <img src="imagens/jucepar-logo-horizontal.png" alt="Jucepar — Junta Comercial do Paraná">
+    <div><small>Painel de transparência</small><h1>Produtividade dos Vogais</h1></div>
+    <span id="exercicios">Carregando…</span>
+  </div></header>
+  <main class="pagina">
+    <section class="apresentacao"><div><b>Painel de acompanhamento</b><h2>Análises de processos empresariais</h2><p>Consulte a produtividade por período, vogal, entidade, tipo de análise e decisão.</p></div><aside><small>Última atualização</small><strong id="atualizacao">—</strong><small id="status-dados">Carregando dados</small></aside></section>
+
+    <section class="caixa filtros"><div class="titulo-secao"><div><h3>Filtros</h3><p>Refine os indicadores exibidos abaixo.</p></div><button id="limpar" class="botao-link">Limpar filtros</button></div>
+      <div class="grade-filtros">
+        <label>Período inicial<select id="inicio"></select></label>
+        <label>Período final<select id="fim"></select></label>
+        <label>Entidade<select id="entidade"><option value="">Todas as entidades</option></select></label>
+        <label>Vogal<select id="vogal"><option value="">Todos os vogais</option></select></label>
+        <label>Tipo de análise<select id="tipo"><option value="">Todos os tipos</option></select></label>
+        <label>Decisão<select id="decisao"><option value="">Todas as decisões</option></select></label>
+      </div>
+    </section>
+
+    <section id="perfil" class="perfil oculto"></section>
+    <section id="indicadores" class="indicadores"></section>
+
+    <section class="caixa"><div class="cabecalho-caixa"><div><small>Destaques do período</small><h3 id="ranking-titulo">Ranking de produtividade — Top 5</h3></div><span id="ranking-info">Acompanha os filtros principais</span></div><div id="ranking" class="ranking"></div></section>
+
+    <div class="duas-colunas">
+      <section class="caixa"><div class="cabecalho-caixa"><div><small>Evolução mensal</small><h3>Análises por mês</h3></div></div><div id="grafico-mensal" class="grafico-mensal"></div></section>
+      <section class="caixa"><div class="cabecalho-caixa"><div><small>Resultado</small><h3>Decisões registradas</h3></div></div><div id="decisoes" class="barras"></div></section>
+    </div>
+
+    <section class="caixa"><div class="cabecalho-caixa"><div><small>Detalhamento</small><h3>Resumo mensal</h3></div><button id="baixar" class="botao">Baixar dados filtrados</button></div><div class="tabela-wrap"><table id="resumo-mensal"></table></div></section>
+
+    <section class="caixa"><div class="cabecalho-resumo"><div><div class="cabecalho-caixa"><div><small>Visão geral</small><h3>Resumo por Vogal</h3></div></div><p>Comparativo independente dos filtros principais.</p></div><label>Ano de referência<select id="ano-resumo"></select></label></div><div class="tabela-wrap"><table id="resumo-vogais"></table></div></section>
+  </main>
+  <footer class="rodape"><span>Fonte: Sistema Empresa Fácil — Junta Comercial do Paraná.</span><span>Dados agregados, sem protocolos individuais.</span></footer>
+  <script src="painel.js" defer></script>
+</body>
+</html>
