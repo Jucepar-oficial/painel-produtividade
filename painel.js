@@ -32,7 +32,32 @@ function dias(inicio, fim, vogal = '') {
 }
 function renderizar(){const f=contexto(),rs=filtrar(),total=soma(rs),du=dias(f.inicio,f.fim,f.vogal),sing=soma(rs.filter(r=>r.tipoAnalise==='Análise Singular')),col=soma(rs.filter(r=>r.tipoAnalise==='Análise Colegiada')),auto=soma(rs.filter(r=>r.tipoAnalise.includes('Automático'))),def=soma(rs.filter(r=>r.decisao==='Deferido')),ex=soma(rs.filter(r=>r.decisao==='Exigencia'));$('indicadores').innerHTML=[['Análises realizadas',nf.format(total),'Cada reanálise conta como nova análise','principal'],['Média por dia útil',df.format(du?total/du:0),`Base: ${du} dias úteis`],['Análises singulares',nf.format(sing),total?pf.format(sing/total):'0,0%'],['Análises colegiadas',nf.format(col),total?pf.format(col/total):'0,0%'],['Deferimentos automáticos',nf.format(auto),total?pf.format(auto/total):'0,0%'],['Taxa de deferimento',total?pf.format(def/total):'0,0%',`${nf.format(ex)} exigências`]].map(x=>`<article class="indicador ${x[3]||''}"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></article>`).join('');renderPerfil(total,du);renderRanking(du);renderMensal(rs,total);renderDecisoes(rs);renderResumoVogais()}
 function renderPerfil(total,du){const nome=$('vogal').value,p=$('perfil');if(!nome){p.classList.add('oculto');return}const v=vogais.find(x=>x.nome===nome);p.classList.remove('oculto');p.innerHTML=`${avatar(nome)}<div><small>Vogal selecionado</small><h3>${esc(nome)}</h3><p>${esc(v.sigla)}</p></div><aside><strong>${nf.format(total)}</strong><span>análises no período</span><span>${df.format(du?total/du:0)} por dia útil</span></aside>`}
+function rankingDados() {
+  const rs = filtrar(true);
+  const f = contexto();
 
+  return vogais
+    .map(v => {
+      const total = soma(rs.filter(r => r.vogal === v.nome));
+      const du = dias(f.inicio, f.fim, v.nome);
+
+      return {
+        v,
+        total,
+        media: du ? total / du : 0
+      };
+    })
+    .filter(x => x.total)
+    .sort(
+      (a, b) =>
+        b.total - a.total ||
+        a.v.nome.localeCompare(b.v.nome, 'pt-BR')
+    )
+    .map((x, i) => ({
+      ...x,
+      pos: i + 1
+    }));
+}
 function renderRanking(){const nome=$('vogal').value,todos=rankingDados(),lista=nome?todos.filter(x=>x.v.nome===nome):todos.slice(0,5);$('ranking-titulo').textContent=nome?'Posição no ranking de produtividade':'Ranking de produtividade — Top 5';$('ranking-info').textContent=nome?`Comparação com ${todos.length} vogais`:'Acompanha os filtros principais';$('ranking').innerHTML=lista.map(x=>`<article class="cartao-ranking posicao-${x.pos}"><em>${x.pos}º</em>${avatar(x.v.nome)}<div><h4>${esc(x.v.nome)}</h4><p>${esc(x.v.sigla)}</p><div class="numero"><strong>${nf.format(x.total)}</strong> análises<small>${df.format(x.media)} por dia útil</small></div></div></article>`).join('')||'<p>Não há dados para os filtros selecionados.</p>'}
 function renderMensal(rs,total){const f=contexto(),ps=periodos.filter(p=>p>=f.inicio&&p<=f.fim),linhas=ps.map(p=>({p,total:soma(rs.filter(r=>r.periodo===p)),du:dias(p,p,f.vogal)})),max=Math.max(1,...linhas.map(x=>x.total));$('grafico-mensal').innerHTML=linhas.map(x=>`<div class="mes-coluna"><small>${nf.format(x.total)}</small><div class="trilho"><i style="height:${100*x.total/max}%"></i></div><b>${MESES[Number(x.p.slice(5))-1].slice(0,3)}/${x.p.slice(2,4)}</b></div>`).join('');$('resumo-mensal').innerHTML=`<thead><tr><th>Mês</th><th>Análises</th><th>Dias úteis</th><th>Média diária</th><th>Participação</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${rotuloPeriodo(x.p)}</td><td>${nf.format(x.total)}</td><td>${x.du||'—'}</td><td>${x.du?df.format(x.total/x.du):'—'}</td><td>${total?pf.format(x.total/total):'0,0%'}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${nf.format(total)}</td><td>${linhas.reduce((a,x)=>a+x.du,0)}</td><td>${df.format(linhas.reduce((a,x)=>a+x.du,0)?total/linhas.reduce((a,x)=>a+x.du,0):0)}</td><td>100,0%</td></tr></tfoot>`}
 function renderDecisoes(rs){const itens=[...new Set(registros.map(r=>r.decisao))].map(n=>[n,soma(rs.filter(r=>r.decisao===n))]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]),max=Math.max(1,...itens.map(x=>x[1]));$('decisoes').innerHTML=itens.map(x=>`<div class="barra"><p><span>${esc(x[0]==='Exigencia'?'Exigência':x[0])}</span><strong>${nf.format(x[1])}</strong></p><div><i style="width:${100*x[1]/max}%"></i></div></div>`).join('')}
