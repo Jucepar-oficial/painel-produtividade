@@ -58,6 +58,32 @@ function rankingDados() {
       pos: i + 1
     }));
 }
+function rankingDados() {
+  const rs = filtrar(true);
+  const f = contexto();
+
+  return vogais
+    .map(v => {
+      const total = soma(rs.filter(r => r.vogal === v.nome));
+      const du = dias(f.inicio, f.fim, v.nome);
+
+      return {
+        v,
+        total,
+        media: du ? total / du : 0
+      };
+    })
+    .filter(x => x.total)
+    .sort(
+      (a, b) =>
+        b.total - a.total ||
+        a.v.nome.localeCompare(b.v.nome, 'pt-BR')
+    )
+    .map((x, i) => ({
+      ...x,
+      pos: i + 1
+    }));
+}
 function renderRanking(){const nome=$('vogal').value,todos=rankingDados(),lista=nome?todos.filter(x=>x.v.nome===nome):todos.slice(0,5);$('ranking-titulo').textContent=nome?'Posição no ranking de produtividade':'Ranking de produtividade — Top 5';$('ranking-info').textContent=nome?`Comparação com ${todos.length} vogais`:'Acompanha os filtros principais';$('ranking').innerHTML=lista.map(x=>`<article class="cartao-ranking posicao-${x.pos}"><em>${x.pos}º</em>${avatar(x.v.nome)}<div><h4>${esc(x.v.nome)}</h4><p>${esc(x.v.sigla)}</p><div class="numero"><strong>${nf.format(x.total)}</strong> análises<small>${df.format(x.media)} por dia útil</small></div></div></article>`).join('')||'<p>Não há dados para os filtros selecionados.</p>'}
 function renderMensal(rs,total){const f=contexto(),ps=periodos.filter(p=>p>=f.inicio&&p<=f.fim),linhas=ps.map(p=>({p,total:soma(rs.filter(r=>r.periodo===p)),du:dias(p,p,f.vogal)})),max=Math.max(1,...linhas.map(x=>x.total));$('grafico-mensal').innerHTML=linhas.map(x=>`<div class="mes-coluna"><small>${nf.format(x.total)}</small><div class="trilho"><i style="height:${100*x.total/max}%"></i></div><b>${MESES[Number(x.p.slice(5))-1].slice(0,3)}/${x.p.slice(2,4)}</b></div>`).join('');$('resumo-mensal').innerHTML=`<thead><tr><th>Mês</th><th>Análises</th><th>Dias úteis</th><th>Média diária</th><th>Participação</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${rotuloPeriodo(x.p)}</td><td>${nf.format(x.total)}</td><td>${x.du||'—'}</td><td>${x.du?df.format(x.total/x.du):'—'}</td><td>${total?pf.format(x.total/total):'0,0%'}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${nf.format(total)}</td><td>${linhas.reduce((a,x)=>a+x.du,0)}</td><td>${df.format(linhas.reduce((a,x)=>a+x.du,0)?total/linhas.reduce((a,x)=>a+x.du,0):0)}</td><td>100,0%</td></tr></tfoot>`}
 function renderDecisoes(rs){const itens=[...new Set(registros.map(r=>r.decisao))].map(n=>[n,soma(rs.filter(r=>r.decisao===n))]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]),max=Math.max(1,...itens.map(x=>x[1]));$('decisoes').innerHTML=itens.map(x=>`<div class="barra"><p><span>${esc(x[0]==='Exigencia'?'Exigência':x[0])}</span><strong>${nf.format(x[1])}</strong></p><div><i style="width:${100*x[1]/max}%"></i></div></div>`).join('')}
