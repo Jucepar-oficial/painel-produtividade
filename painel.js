@@ -1,5 +1,13 @@
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const FOTOS={"ADELE STIVAL CHENU SCHNEIDER":"adele-stival-chenu-schneider.webp","ALEXANDRE FAYZANO":"alexandre-fayzano.webp","BEATRIZ SZPAK":"beatriz-szpak.webp","BIANCA DOMAKOSKI":"bianca-domakoski.webp","CELSO MACHADO":"celso-machado.webp","CLAUDIOMIRO SANTOS RODRIGUES":"claudiomiro-santos-rodrigues.webp","ERCÍLIO SANTINONI":"ercilio-santinoni.webp","FABIANA KONIG JUNKES":"fabiana-konig-junkes.webp","FRANCISCO MISURELLI FERRO":"francisco-misurelli-ferro.webp","GIOVANI CÁSSIO PIOVEZAN":"giovani-cassio-piovezan.webp","IVO ERICSSON CAMARGO DE LIMA":"ivo-ribeiro-camargo-de-lima.webp","JAIR LEITE":"jair-leite.webp","JOÃO PAULO ATILIO GODRI":"joao-paulo-atilio-godri.webp","JOSÉ LUIZ VARGAS BUENO":"jose-luiz-vargas-bueno.webp","JUÇARA MARQUES NEGREIROS":"jucara-marques-negreiros.webp","MARIA AUGUSTA PISANI GEARA":"maria-augusta-pisani-geara.webp","SAMARA CRISTINA DOS SANTOS DE MEIRA":"samara-cristina-dos-santos-de-meira.webp","SÉRGIO PEREIRA LOBO":"sergio-pereira-lobo.webp","CASSIANA MARIA MEDEIROS FRAZÃO MELEK":"cassiana-maria-medeiros-frazao-melek.png","JOSÉ GEORGEVAN GOMES DE ARAÚJO":"jose-georgevan-gomes-de-araujo.png","NAIM AKEL NETO":"naim-akel-neto.png"};
+const EXCECOES_DIAS_UTEIS = {
+  "MARIA AUGUSTA PISANI GEARA": {
+    "2026-04": 13
+  },
+  "SAMARA CRISTINA DOS SANTOS DE MEIRA": {
+    "2026-04": 14
+  }
+};
 const $=id=>document.getElementById(id),nf=new Intl.NumberFormat('pt-BR'),df=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}),pf=new Intl.NumberFormat('pt-BR',{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1});
 let registros=[],calendario={},periodos=[],vogais=[],anoSelecionado='';
 const soma=rs=>rs.reduce((a,r)=>a+r.quantidade,0),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -14,13 +22,79 @@ function montarFiltros(){atualizarPeriodos();opcoes('entidade',[...new Map(vogai
 function atualizarVogais(){const ent=$('entidade').value,atual=$('vogal').value;opcoes('vogal',vogais.filter(v=>!ent||v.entidade===ent).map(v=>[v.nome,v.nome]),'Todos os vogais');if([...$('vogal').options].some(o=>o.value===atual))$('vogal').value=atual}
 function contexto(){return{inicio:$('inicio').value,fim:$('fim').value,entidade:$('entidade').value,vogal:$('vogal').value,tipo:$('tipo').value,decisao:$('decisao').value}}
 function filtrar(ignorarVogal=false){const f=contexto();return registros.filter(r=>r.periodo>=f.inicio&&r.periodo<=f.fim&&(!f.entidade||r.entidade===f.entidade)&&(!f.tipo||r.tipoAnalise===f.tipo)&&(!f.decisao||r.decisao===f.decisao)&&(ignorarVogal||!f.vogal||r.vogal===f.vogal))}
-function dias(inicio,fim){return periodos.filter(p=>p>=inicio&&p<=fim).reduce((a,p)=>a+(calendario[p]||0),0)}
-function renderizar(){const f=contexto(),rs=filtrar(),total=soma(rs),du=dias(f.inicio,f.fim),sing=soma(rs.filter(r=>r.tipoAnalise==='Análise Singular')),col=soma(rs.filter(r=>r.tipoAnalise==='Análise Colegiada')),auto=soma(rs.filter(r=>r.tipoAnalise.includes('Automático'))),def=soma(rs.filter(r=>r.decisao==='Deferido')),ex=soma(rs.filter(r=>r.decisao==='Exigencia'));$('indicadores').innerHTML=[['Análises realizadas',nf.format(total),'Cada reanálise conta como nova análise','principal'],['Média por dia útil',df.format(du?total/du:0),`Base: ${du} dias úteis`],['Análises singulares',nf.format(sing),total?pf.format(sing/total):'0,0%'],['Análises colegiadas',nf.format(col),total?pf.format(col/total):'0,0%'],['Deferimentos automáticos',nf.format(auto),total?pf.format(auto/total):'0,0%'],['Taxa de deferimento',total?pf.format(def/total):'0,0%',`${nf.format(ex)} exigências`]].map(x=>`<article class="indicador ${x[3]||''}"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></article>`).join('');renderPerfil(total,du);renderRanking(du);renderMensal(rs,total);renderDecisoes(rs);renderResumoVogais()}
+function dias(inicio, fim, vogal = '') {
+  return periodos
+    .filter(p => p >= inicio && p <= fim)
+    .reduce((total, periodo) => {
+      const excecao = EXCECOES_DIAS_UTEIS[vogal]?.[periodo];
+      return total + (excecao ?? calendario[periodo] ?? 0);
+    }, 0);
+}
+function renderizar(){const f=contexto(),rs=filtrar(),total=soma(rs),du=dias(f.inicio,f.fim,f.vogal),sing=soma(rs.filter(r=>r.tipoAnalise==='Análise Singular')),col=soma(rs.filter(r=>r.tipoAnalise==='Análise Colegiada')),auto=soma(rs.filter(r=>r.tipoAnalise.includes('Automático'))),def=soma(rs.filter(r=>r.decisao==='Deferido')),ex=soma(rs.filter(r=>r.decisao==='Exigencia'));$('indicadores').innerHTML=[['Análises realizadas',nf.format(total),'Cada reanálise conta como nova análise','principal'],['Média por dia útil',df.format(du?total/du:0),`Base: ${du} dias úteis`],['Análises singulares',nf.format(sing),total?pf.format(sing/total):'0,0%'],['Análises colegiadas',nf.format(col),total?pf.format(col/total):'0,0%'],['Deferimentos automáticos',nf.format(auto),total?pf.format(auto/total):'0,0%'],['Taxa de deferimento',total?pf.format(def/total):'0,0%',`${nf.format(ex)} exigências`]].map(x=>`<article class="indicador ${x[3]||''}"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></article>`).join('');renderPerfil(total,du);renderRanking(du);renderMensal(rs,total);renderDecisoes(rs);renderResumoVogais()}
 function renderPerfil(total,du){const nome=$('vogal').value,p=$('perfil');if(!nome){p.classList.add('oculto');return}const v=vogais.find(x=>x.nome===nome);p.classList.remove('oculto');p.innerHTML=`${avatar(nome)}<div><small>Vogal selecionado</small><h3>${esc(nome)}</h3><p>${esc(v.sigla)}</p></div><aside><strong>${nf.format(total)}</strong><span>análises no período</span><span>${df.format(du?total/du:0)} por dia útil</span></aside>`}
-function rankingDados(){const rs=filtrar(true),f=contexto(),du=dias(f.inicio,f.fim);return vogais.map(v=>({v,total:soma(rs.filter(r=>r.vogal===v.nome))})).filter(x=>x.total).sort((a,b)=>b.total-a.total||a.v.nome.localeCompare(b.v.nome,'pt-BR')).map((x,i)=>({...x,pos:i+1,media:du?x.total/du:0}))}
+
 function renderRanking(){const nome=$('vogal').value,todos=rankingDados(),lista=nome?todos.filter(x=>x.v.nome===nome):todos.slice(0,5);$('ranking-titulo').textContent=nome?'Posição no ranking de produtividade':'Ranking de produtividade — Top 5';$('ranking-info').textContent=nome?`Comparação com ${todos.length} vogais`:'Acompanha os filtros principais';$('ranking').innerHTML=lista.map(x=>`<article class="cartao-ranking posicao-${x.pos}"><em>${x.pos}º</em>${avatar(x.v.nome)}<div><h4>${esc(x.v.nome)}</h4><p>${esc(x.v.sigla)}</p><div class="numero"><strong>${nf.format(x.total)}</strong> análises<small>${df.format(x.media)} por dia útil</small></div></div></article>`).join('')||'<p>Não há dados para os filtros selecionados.</p>'}
-function renderMensal(rs,total){const f=contexto(),ps=periodos.filter(p=>p>=f.inicio&&p<=f.fim),linhas=ps.map(p=>({p,total:soma(rs.filter(r=>r.periodo===p)),du:calendario[p]||0})),max=Math.max(1,...linhas.map(x=>x.total));$('grafico-mensal').innerHTML=linhas.map(x=>`<div class="mes-coluna"><small>${nf.format(x.total)}</small><div class="trilho"><i style="height:${100*x.total/max}%"></i></div><b>${MESES[Number(x.p.slice(5))-1].slice(0,3)}/${x.p.slice(2,4)}</b></div>`).join('');$('resumo-mensal').innerHTML=`<thead><tr><th>Mês</th><th>Análises</th><th>Dias úteis</th><th>Média diária</th><th>Participação</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${rotuloPeriodo(x.p)}</td><td>${nf.format(x.total)}</td><td>${x.du||'—'}</td><td>${x.du?df.format(x.total/x.du):'—'}</td><td>${total?pf.format(x.total/total):'0,0%'}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${nf.format(total)}</td><td>${linhas.reduce((a,x)=>a+x.du,0)}</td><td>${df.format(linhas.reduce((a,x)=>a+x.du,0)?total/linhas.reduce((a,x)=>a+x.du,0):0)}</td><td>100,0%</td></tr></tfoot>`}
+function renderMensal(rs,total){const f=contexto(),ps=periodos.filter(p=>p>=f.inicio&&p<=f.fim),linhas=ps.map(p=>({p,total:soma(rs.filter(r=>r.periodo===p)),du:dias(p,p,f.vogal)})),max=Math.max(1,...linhas.map(x=>x.total));$('grafico-mensal').innerHTML=linhas.map(x=>`<div class="mes-coluna"><small>${nf.format(x.total)}</small><div class="trilho"><i style="height:${100*x.total/max}%"></i></div><b>${MESES[Number(x.p.slice(5))-1].slice(0,3)}/${x.p.slice(2,4)}</b></div>`).join('');$('resumo-mensal').innerHTML=`<thead><tr><th>Mês</th><th>Análises</th><th>Dias úteis</th><th>Média diária</th><th>Participação</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${rotuloPeriodo(x.p)}</td><td>${nf.format(x.total)}</td><td>${x.du||'—'}</td><td>${x.du?df.format(x.total/x.du):'—'}</td><td>${total?pf.format(x.total/total):'0,0%'}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${nf.format(total)}</td><td>${linhas.reduce((a,x)=>a+x.du,0)}</td><td>${df.format(linhas.reduce((a,x)=>a+x.du,0)?total/linhas.reduce((a,x)=>a+x.du,0):0)}</td><td>100,0%</td></tr></tfoot>`}
 function renderDecisoes(rs){const itens=[...new Set(registros.map(r=>r.decisao))].map(n=>[n,soma(rs.filter(r=>r.decisao===n))]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]),max=Math.max(1,...itens.map(x=>x[1]));$('decisoes').innerHTML=itens.map(x=>`<div class="barra"><p><span>${esc(x[0]==='Exigencia'?'Exigência':x[0])}</span><strong>${nf.format(x[1])}</strong></p><div><i style="width:${100*x[1]/max}%"></i></div></div>`).join('')}
-function renderResumoVogais(){const ano=$('ano-resumo').value,rs=registros.filter(r=>r.periodo.startsWith(ano)),du=Object.entries(calendario).filter(([p])=>p.startsWith(ano)&&registros.some(r=>r.periodo===p)).reduce((a,[,d])=>a+d,0),linhas=vogais.map(v=>{const vr=rs.filter(r=>r.vogal===v.nome),total=soma(vr);return{v,total,media:du?total/du:0,sing:soma(vr.filter(r=>r.tipoAnalise==='Análise Singular')),col:soma(vr.filter(r=>r.tipoAnalise==='Análise Colegiada')),auto:soma(vr.filter(r=>r.tipoAnalise.includes('Automático'))),ex:soma(vr.filter(r=>r.decisao==='Exigencia'))}}).filter(x=>x.total).sort((a,b)=>b.total-a.total);$('resumo-vogais').innerHTML=`<thead><tr><th>Posição</th><th>Vogal</th><th>Entidade</th><th>Análises</th><th>Média diária</th><th>Singulares</th><th>Colegiadas</th><th>Automáticas</th><th>Exigências</th></tr></thead><tbody>${linhas.map((x,i)=>`<tr><td>${i+1}º</td><td>${esc(x.v.nome)}</td><td>${esc(x.v.sigla)}</td><td>${nf.format(x.total)}</td><td>${df.format(x.media)}</td><td>${nf.format(x.sing)}</td><td>${nf.format(x.col)}</td><td>${nf.format(x.auto)}</td><td>${nf.format(x.ex)}</td></tr>`).join('')}</tbody>`}
+function renderResumoVogais(){
+  const ano=$('ano-resumo').value;
+  const rs=registros.filter(r=>r.periodo.startsWith(ano));
+
+  const linhas=vogais.map(v=>{
+    const vr=rs.filter(r=>r.vogal===v.nome);
+    const total=soma(vr);
+
+    const mesesDoVogal=[
+      ...new Set(vr.map(r=>r.periodo))
+    ];
+
+    const du=mesesDoVogal.reduce(
+      (somaDias,periodo)=>somaDias+dias(periodo,periodo,v.nome),
+      0
+    );
+
+    return{
+      v,
+      total,
+      media:du?total/du:0,
+      sing:soma(vr.filter(r=>r.tipoAnalise==='Análise Singular')),
+      col:soma(vr.filter(r=>r.tipoAnalise==='Análise Colegiada')),
+      auto:soma(vr.filter(r=>r.tipoAnalise.includes('Automático'))),
+      ex:soma(vr.filter(r=>r.decisao==='Exigencia'))
+    };
+  })
+  .filter(x=>x.total)
+  .sort((a,b)=>b.total-a.total);
+
+  $('resumo-vogais').innerHTML=
+    `<thead>
+      <tr>
+        <th>Posição</th>
+        <th>Vogal</th>
+        <th>Entidade</th>
+        <th>Análises</th>
+        <th>Média diária</th>
+        <th>Singulares</th>
+        <th>Colegiadas</th>
+        <th>Automáticas</th>
+        <th>Exigências</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${linhas.map((x,i)=>`
+        <tr>
+          <td>${i+1}º</td>
+          <td>${esc(x.v.nome)}</td>
+          <td>${esc(x.v.sigla)}</td>
+          <td>${nf.format(x.total)}</td>
+          <td>${df.format(x.media)}</td>
+          <td>${nf.format(x.sing)}</td>
+          <td>${nf.format(x.col)}</td>
+          <td>${nf.format(x.auto)}</td>
+          <td>${nf.format(x.ex)}</td>
+        </tr>
+      `).join('')}
+    </tbody>`;
+}
 function baixarCsv(){const rs=filtrar(),linhas=[['Mês','Vogal','Entidade','Tipo','Decisão','Quantidade'],...rs.map(r=>[r.periodo,r.vogal,r.siglaEntidade,r.tipoAnalise,r.decisao,r.quantidade])],csv='\ufeff'+linhas.map(l=>l.map(v=>`"${String(v).replaceAll('"','""')}"`).join(';')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='produtividade-vogais-filtrada.csv';a.click();URL.revokeObjectURL(a.href)}
 document.addEventListener('DOMContentLoaded',iniciar);
